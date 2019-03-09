@@ -6,18 +6,23 @@ In this repository are all the files and codes used for reproducible data analys
 Below is a short descriptions of the files.
 
 Complete workflow
+
 Manuscript_cultivation.rmd contains -R Markdown file containing all details and analysis scripts used in this study.
 
-#Biom File 
+#Biom File
+
 Cultivation_final.biom provides 16S rRNA gene amplicon sequencing data, classified to Genus level (SILVA SSU 128 database)
 
 #Mapping File
+
 Mapping_cultivation.csv contains metadata for individual samples
 
 #Phyloggenetic tree
+
 DG.tre contains phylogenetic tree information of OTUs. 
 
-#Heatmap
+#Heatmap 
+
 HeatMap.csv contains list of OTUs with average relative abundance above 0.25% in all samples. 
 
 All questions or comments concerning this analysis can be directed at anak1.indraningrat@wur.nl
