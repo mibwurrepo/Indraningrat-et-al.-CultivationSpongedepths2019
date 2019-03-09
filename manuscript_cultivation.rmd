@@ -1,0 +1,307 @@
+Title: Cultivation and antimicrobial screening of sponge-associated bacteria from the marine sponges Agelas sventres and Xestospongia muta collected from different depths
+Author: Anak Agung Gede Indraningrat(1,2), Sebastian Micheller(1), Mandy Runderkamp(1), Ina Sauerland(1), Leontine. E. Becking(3,4), Hauke Smidt(1) and Detmer Sipkema
+Correspondence: Anak Agung Gede Indraningrat and Detmer Sipkema
+
+Affiliation:  
+1.Laboratory of Microbiology, Wageningen University & Research, Stippeneng 4, 6708 WE Wageningen, Netherlands.
+2.Faculty of Medicine and Health Science, Warmadewa University, Jln Terompong 24, Denpasar, Bali, Indonesia.
+3.Department of Marine Animal Ecology, Wageningen University & Research. De Elst 1, Wageningen, The Netherlands.
+4.Wageningen Marine Research, Wageningen University & Research. Ankerpark 4, Wageningen, The Netherlands.
+
+This is the file with codes for analysis done in the research article Cultivation and antimicrobial screening of sponge-associated bacteria from the marine sponges Agelas sventres and Xestospongia muta collected from different depths submitted to Marine Drugs Journal.
+
+The required files and Rmarkdown files can be found at the Github repository  mibwurrepo/Indraningrat-et-al.-CultivationSpongedepths2019.
+
+Please install the following packages and load them for the analysis
+install.packages("devtools")
+library(devtools)
+source("https://bioconductor.org/biocLite.R")#use this command if "install.packages" command doesn't work 
+biocLite("Biostrings") #Memory efficient string containers, to manipulate large biological sequences or sets of sequences
+source("https://bioconductor.org/biocLite.R")
+biocLite("DESeq2")
+#Since microbiome does not look for all the pacakges it depends on, you need to install the following packages first
+source("https://bioconductor.org/biocLite.R")
+bioclite("ggplot2") #to declare the input data frame for a graphic
+#to read, write, plot, and manipulate phylogenetic trees
+install.packages("picante",repos="http://R-Forge.R-project.org") 
+install.packages("plyr")#to  Split, apply and combine Data 
+install.packages("vegan") # to run all common ordination methods (CCA, PCA, PCOA., etc)
+install.packages("tensorA")
+install.packages("bayesm")
+install.packages("energy")
+install.packages("robustbase")
+install.packages("plotly")
+install.packages("DT")   #to display R data object into tables on html pages
+install.packages("RColorBrewer")  # to choose sensible colour schemes for figures in R
+install.packages("reshape2")  # to transform data between wide and long formats.
+install.packages("scales")  #to provide methods for automatically determining breaks and labels for axes and legends
+install.packages("data.table") #to manipulate data operations such as subset, group, update, join etc
+install.packages("DESeq2")  #to use negative binomial for differential OTU analysis
+install.packages("dplyr")   #to transform and summarize tabular data with rows and columns
+source("https://raw.githubusercontent.com/joey711/phyloseq/master/inst/scripts/installer.R",
+       local = TRUE)
+install.packages("ggthemes")
+install.packages("ggdendro")
+install.packages("picante")
+install.packages("maptree")
+install.packages("rmdformats")
+install.packages("dynamicTreeCut")
+install.packages("fastcluster")
+install.packages("Rcpp")# better to install from right box install button.
+source("https://bioconductor.org/biocLite.R")
+biocLite("metagenomeSeq")
+source("https://bioconductor.org/biocLite.R")
+biocLite("GO.db")
+source("http://www.bioconductor.org/biocLite.R")
+biocLite(c("ade4", "fastcluster", "df2json", "rjson", "gplots", "devtools", "ggplot2","MASS","minet","mixOmics", "plyr","qvalue","reshape2","RPA","svDialogs","vegan","WGCNA"))
+library(BiocInstaller)
+source("http://www.bioconductor.org/biocLite.R")
+useDevel()
+biocLite("microbiome")
+# Test installation by loading the microbiome package in R
+library("microbiome") #to analyse tasks in microbiome profiling studies
+#load required packages: 
+library(ggplot2) 
+library(ape)
+library(plyr)
+library(vegan)
+library(Biostrings)
+library(RColorBrewer)
+library(reshape2)
+library(scales)
+library(data.table)
+library(DESeq2)
+library(microbiome)
+library(dplyr)
+library(phyloseq)
+library(DT)
+library(Rcpp)
+library(picante)
+library(pheatmap)
+###################################################Getting Started#########################################################################
+theme_set(theme_bw()) # Set plotting theme
+#create a phyloseq file 
+pseq1 <- read_phyloseq(otu.file = "Cultivation_final.biom", taxonomy.file = NULL, metadata.file = "Mapping_cultivation.csv", type = "biom")
+#Read three file
+library(ape)
+treefile_p1 <- read.tree("DG.tre")
+#Merge into phyloseq object
+ps1 <-merge_phyloseq(pseq1,treefile_p1)
+ps1 <- prune_taxa(taxa_sums(ps1) > 0, ps1) # remove row with total value of 0
+sort(sample_sums(ps1))###check the number of reads/sample
+write.csv(sample_sums(ps1), file='summary of reads.csv')###save summary number of reads in CSV
+
+#########calculate alpha diversity###########
+#Calculate Phylogenetic Distance (PD) of the dataset
+##PD unrooted tree
+my_colors <- c("#CBD588", "#5F7FC7", "orange","#DA5724", "#508578", "#CD9BCD", "#AD6F3B", "#673770","#D14285", "#652926", "#C84248", "#8569D5", "#5E738F","#D1A33D", "#8A7C64", "#599861", "steelblue" )
+otu_table_ps1 <- as.data.frame(ps1@otu_table)
+metadata_table_ps1  <- as.data.frame(ps1@sam_data)
+df.pd <- pd(t(otu_table_ps1), treefile_p1,include.root=F) 
+datatable(df.pd)
+ps1.metadata <- as(sample_data(ps1), "data.frame")
+head(ps1.metadata)
+#plot Phylogenetic Diversity of all samples
+ps1.metadata$Phyogenetic_diversity <- df.pd$PD
+colnames(ps1.metadata)
+Reads <- sort(sample_sums(ps1)) 
+#plot Phylogenetic Diversity of all samples
+metadata_table_ps1$Phyogenetic_diversity <- df.pd$PD 
+plot.pd1 <- ggplot(metadata_table_ps1, aes(Source, Phyogenetic_diversity)) + geom_boxplot(aes(fill = Source)) + theme(axis.text.x = element_text(size=14, angle = 90)) 
+print(plot.pd1)
+#test of significance based on PD ##
+#all samples
+ps1.adiv <- estimate_richness(ps1, measures = c("Chao1", "Shannon", "Observed", "InvSimpson"))
+ps1.metadata <- as(sample_data(ps1), "data.frame")
+head(ps1.metadata)
+ps1.metadata$Phyogenetic_diversity <- df.pd$PD####add PD value
+ps1.metadata$Observed <- ps1.adiv$Observed 
+ps1.metadata$Shannon <- ps1.adiv$Shannon
+ps1.metadata$InvSimpson <- ps1.adiv$InvSimpson
+colnames(ps1.metadata)
+write.csv(ps1.metadata, file = "ps1.metadata.unrooted.csv", fileEncoding = "UTF-16LE")
+
+###############PD rooted tree to accomodate single species######################## 
+my_colors <- c("#CBD588", "#5F7FC7", "orange","#DA5724", "#508578", "#CD9BCD", "#AD6F3B", "#673770","#D14285", "#652926", "#C84248", "#8569D5", "#5E738F","#D1A33D", "#8A7C64", "#599861", "steelblue" )
+otu_table_ps1 <- as.data.frame(ps1@otu_table)
+metadata_table_ps1  <- as.data.frame(ps1@sam_data)
+df.pd <- pd(t(otu_table_ps1), treefile_p1,include.root=T) 
+datatable(df.pd)
+ps1.metadata <- as(sample_data(ps1), "data.frame")
+head(ps1.metadata)
+#plot Phylogenetic Diversity of all samples
+ps1.metadata$Phyogenetic_diversity <- df.pd$PD
+colnames(ps1.metadata)
+Reads <- sort(sample_sums(ps1)) 
+#plot Phylogenetic Diversity of all samples
+metadata_table_ps1$Phyogenetic_diversity <- df.pd$PD 
+plot.pd1 <- ggplot(metadata_table_ps1, aes(SampleSource, Phyogenetic_diversity)) + geom_boxplot(aes(fill = SampleSource)) + ggtitle("Phylogenetic Diversity of All Samples") + theme(axis.text.x = element_text(size=14, angle = 90)) 
+print(plot.pd1)
+#test of significance based on PD ##
+#all samples
+ps1.adiv <- estimate_richness(ps1, measures = c("Chao1", "Shannon", "Observed", "InvSimpson"))
+ps1.metadata <- as(sample_data(ps1), "data.frame")
+head(ps1.metadata)
+ps1.metadata$Phyogenetic_diversity <- df.pd$PD####add PD value
+ps1.metadata$Observed <- ps1.adiv$Observed 
+ps1.metadata$Shannon <- ps1.adiv$Shannon
+ps1.metadata$InvSimpson <- ps1.adiv$InvSimpson
+colnames(ps1.metadata)
+write.csv(ps1.metadata, file = "ps1.metadata.rooted.csv", fileEncoding = "UTF-16LE")
+
+####Beta diversity statistical test###
+###ADONIS and betadisper test based on bray curtis####
+ps1.hel <- transform(ps1, "hellinger") 
+otu_table_ps1.hel <- as.data.frame(ps1.hel@otu_table)
+metadf.hel <- data.frame(sample_data(ps1.hel))
+#testing influence of depth 
+adonis(distance(ps1.hel, method="bray") ~ Depth,
+       data = metadf.hel)
+dist.hel <- vegdist(t(otu_table_ps1.hel))
+ps.disper.hel <- betadisper(dist.hel, metadf.hel$Depth)
+permutest(ps.disper.hel)
+
+#Original Boxplot analysis
+##Some of the taxonomy levels may include "<empty>" entries. If you want to remove them for plotting then run the following code.  
+ps1.com <- ps1 # create a new pseq object for generating boxplot
+tax.mat <- tax_table(ps1.com)
+tax.df <- as.data.frame(tax.mat)
+tax.df[tax.df == "__*~"] <- "__"
+tax.df[tax.df == "k__<empty>"] <- "k__"
+tax.df[tax.df == "p__<empty>"] <- "p__"
+tax.df[tax.df == "c__<empty>"] <- "c__"
+tax.df[tax.df == "o__<empty>"] <- "o__"
+tax.df[tax.df == "f__<empty>"] <- "f__"
+tax.df[tax.df == "g__<empty>"] <- "g__"
+tax_table(ps1.com) <- tax_table(as.matrix(tax.df))
+
+#remove sponge cyrostocks (inoculums) from the dataset
+psMediaonly <- subset_samples(ps1, MediaType != "Cryostock") #remove cryostocks (inoculums) from the dataset
+psMediaonly <- prune_taxa(taxa_sums(psMediaonly) > 0, psMediaonly)
+otu_table_psMediaonly <- as.data.frame(psMediaonly@otu_table) 
+metadata_table_psMediaonly  <- as.data.frame(psMediaonly@sam_data)
+df.psMediaonly <- pd(t(otu_table_psMediaonly), treefile_p1,include.root=F) 
+datatable(df.psMediaonly)
+
+#####PERMANOVA statistical test
+#####################scraped bacterial colonies all samples###################################
+#impact of sponge
+psMediaonly.hel <- transform(psMediaonly, "hellinger") 
+otu_table_psMediaonly.hel <- as.data.frame(psMediaonly.hel@otu_table)
+metadf.psMediaonly.hel <- data.frame(sample_data(psMediaonly.hel ))
+otu_table_psMediaonly.hel <- as.data.frame(psMediaonly.hel@otu_table)
+metadf_Mediaonly.hel <- data.frame(sample_data(psMediaonly.hel))
+adonis(distance(psMediaonly.hel, method="bray") ~ Sponge,
+       data = metadf_Mediaonly.hel)
+dist.hel <- vegdist(t(otu_table_psMediaonly.hel))
+ps.disper.hel <- betadisper(dist.hel, metadf_Mediaonly.hel$Sponge)
+permutest(ps.disper.hel)
+
+#depth
+otu_table_psMediaonly.hel <- as.data.frame(psMediaonly.hel@otu_table)
+metadf_Mediaonly.hel <- data.frame(sample_data(psMediaonly.hel))
+
+adonis(distance(psMediaonly.hel, method="bray") ~ Depth,
+       data = metadf_Mediaonly.hel)
+dist.hel <- vegdist(t(otu_table_psMediaonly.hel))
+ps.disper.hel <- betadisper(dist.hel, metadf_Mediaonly.hel$Depth)
+permutest(ps.disper.hel)
+
+##media type
+otu_table_psMediaonly.hel <- as.data.frame(psMediaonly@otu_table)
+metadf_Mediaonly.hel <- data.frame(sample_data(psMediaonly.hel))
+adonis(distance(psMediaonly.hel, method="bray") ~ MediaType,
+       data = metadf_Mediaonly.hel)
+dist.hel <- vegdist(t(otu_table_psMediaonly.hel))
+ps.disper.hel <- betadisper(dist.hel, metadf_Mediaonly.hel$MediaType)
+permutest(ps.disper.hel)
+#############subset X. muta  only without sponge inoculums######################
+#depth
+psMediaXmuta_only <- subset_samples(psMediaonly, SpongeSpecies != "A.sventres") #remove A. sventres scraped community
+psMediaXmuta_only <- prune_taxa(taxa_sums(psMediaXmuta_only) > 0, psMediaXmuta_only)
+psMediaXmuta_only.hel <- transform(psMediaXmuta_only, "hellinger") 
+otu_table_psMediaXmuta_only  <- as.data.frame(psMediaXmuta_only@otu_table) 
+metadf_MediaXmuta_only.hel <- data.frame(sample_data(psMediaXmuta_only.hel))
+adonis(distance(psMediaXmuta_only.hel, method="bray") ~ Depth,
+       data = metadf_MediaXmuta_only.hel)
+dist.hel <- vegdist(t(otu_table_psMediaXmuta_only))
+ps.disper.hel <- betadisper(dist.hel, metadf_MediaXmuta_only.hel$Depth)
+permutest(ps.disper.hel)
+#media type
+otu_table_psMediaXmuta_only  <- as.data.frame(psMediaXmuta_only@otu_table) 
+metadf_MediaXmuta_only.hel <- data.frame(sample_data(psMediaXmuta_only.hel))
+adonis(distance(psMediaXmuta_only.hel, method="bray") ~ MediaType,
+       data = metadf_MediaXmuta_only.hel)
+dist.hel <- vegdist(t(otu_table_psMediaXmuta_only))
+ps.disper.hel <- betadisper(dist.hel, metadf_MediaXmuta_only.hel$MediaType)
+permutest(ps.disper.hel)
+##############Asventres only  without sponge inoculums#####################
+#depth
+psMediaAsventres_only <- subset_samples(psMediaonly, SpongeSpecies != "X.muta") #remove X. muta scraped community
+psMediaAsventres_only <- prune_taxa(taxa_sums(psMediaAsventres_only) > 0, psMediaAsventres_only)
+psMediaAsventres_only.hel <- transform(psMediaAsventres_only , "hellinger") 
+otu_table_psMediaAsventres_only  <- as.data.frame(psMediaAsventres_only@otu_table) 
+metadf_MediaAsventres_only.hel <- data.frame(sample_data(psMediaAsventres_only.hel))
+adonis(distance(psMediaAsventres_only.hel, method="bray") ~ Depth,
+       data = metadf_MediaAsventres_only.hel)
+dist.hel <- vegdist(t(otu_table_psMediaAsventres_only))
+ps.disper.hel <- betadisper(dist.hel, metadf_MediaAsventres_only.hel$Depth)
+permutest(ps.disper.hel)
+#media type
+otu_table_psMediaAsventres_only  <- as.data.frame(psMediaAsventres_only@otu_table) 
+metadf_MediaAsventres_only.hel <- data.frame(sample_data(psMediaAsventres_only.hel))
+adonis(distance(psMediaAsventres_only.hel, method="bray") ~ MediaType,
+       data = metadf_MediaAsventres_only.hel)
+dist.hel <- vegdist(t(otu_table_psMediaAsventres_only))
+ps.disper.hel <- betadisper(dist.hel, metadf_MediaAsventres_only.hel$MediaType)
+permutest(ps.disper.hel)
+
+#######PCoA Bray Curtis###########################
+###PCoA X. muta only
+#Depth
+psMediaXmuta_only.hel <- transform(psMediaXmuta_only, "hellinger")
+otu_table_psMediaXmuta_only  <- as.data.frame(psMediaXmuta_only@otu_table)
+ordu.bray.MediaXmuta.hel = ordinate(psMediaXmuta_only, "PCoA", "bray", weighted=F)
+bray.MediaXmuta.hel <- plot_ordination(psMediaXmuta_only.hel, ordu.bray.MediaXmuta.hel,color="Depth",shape="MediaType")
+bray_MediaXmuta.hel <- bray.MediaXmuta.hel + scale_colour_manual(values = c("royalblue4", "royalblue1","steelblue1")) + geom_point(size = 2) + theme_bw()
+print(bray_MediaXmuta.hel)
+###PCOA A. sventres only
+psMediaAsventres_only.hel <- transform(psMediaAsventres_only, "hellinger")
+otu_table_psMediaAsventres_only  <- as.data.frame(psMediaAsventres_only@otu_table)
+ordu.bray.MediaAsventres.hel = ordinate(psMediaAsventres_only, "PCoA", "bray", weighted=F)
+bray.MediaAsventres.hel <- plot_ordination(psMediaAsventres_only.hel, ordu.bray.MediaAsventres.hel,color="Depth",shape="MediaType")
+bray_MediaAsventres.hel <- bray.MediaAsventres.hel + scale_colour_manual(values = c("red4", "orangered")) + geom_point(size = 2) + theme_bw()
+print(bray_MediaAsventres.hel)
+
+############################################Barplot composition based on Phylum level#################################
+# We need to set Palette
+taxic <- as.data.frame(ps1.com@tax_table)  
+colourCount = length(unique(taxic$Phylum))  #define number of variable colors based on number of Phylum
+getPalette = colorRampPalette(brewer.pal(9, "Set1"))  # change the palette as well as the number of colors will change according to palette.
+otu.df <- as.data.frame(otu_table(ps1.com))
+head(otu.df)
+taxic$OTU <- row.names.data.frame(otu.df)
+colnames(taxic)
+library(knitr)
+head(kable(taxic))  # check the table.
+taxmat <- as.matrix(taxic)  # convert it into a matrix.
+new.tax <- tax_table(taxmat)  # convert into phyloseq compatible file.
+tax_table(ps1.com) <- new.tax  # incroporate into phyloseq Object
+guide_italics <- guides(fill = guide_legend(label.theme = element_text(size = 15,face = "italic", colour = "Black", angle = 0)))
+ps1.com@phy_tree <- NULL # remove tree 
+ps1.com.phyl <- aggregate_taxa(ps1.com, "Phylum") #aggregate to Phylum level
+ps1.com.phyl.rel <- microbiome::transform(ps1.com.phyl, "compositional")# change counts to relative abudance
+otu_table.phyl.rel <- otu_table(ps1.com.phyl.rel)#generate OTU table 
+plot.composition.relAbun.phylum <- plot_composition(ps1.com.phyl.rel) + theme(legend.position = "bottom") + 
+  scale_fill_manual(values = getPalette(colourCount)) + theme_bw() + 
+  theme(axis.text.x = element_text(angle = 90)) + 
+  ggtitle("Relative abundance based on Phylum level") + guide_italics 
+plot.composition.relAbun.phylum
+
+##heatmap
+HeatMap <-read.csv("HeatMap.csv", row.names=1, check.names=F, stringsAsFactors=F, header = TRUE)#import heatmap file after re-arrangenment (edited version)
+color = c("white", "snow2", "snow3","snow4", "steelblue2", "royalblue2", "royalblue4","red", "red2", "red3", "red4")
+breaks = c(-0.5, 0, 0.005, 0.01, 0.05, 0.09, 0.14, 0.20, 0.40, 0.60, 0.80, 1.00)# 0 = white, 0-0.5% = gray, 0.5%-1% = green, 1%-5% = skyblue, 5%-9%=royalblue, 9%-14% = blue, 14%-19% =purple, 19%-25% = magenta, 25%-45%= violet, 45%-75% = red
+pheatmap(HeatMap, cluster_col = FALSE, cluster_row = FALSE, color=color, breaks=breaks, fontsize_row = 8, main = "HeatMap of OTU based total average relative abundance >= 0.25% among all samples")#edit picture in adobe for a better clarity of color scale
+
+
