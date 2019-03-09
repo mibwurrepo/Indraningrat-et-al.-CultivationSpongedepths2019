@@ -1,5 +1,5 @@
 # Indraningrat-et-al.-CultivationSpongedepths2019
-Study title: Cultivation and antimicrobial screening of sponge-associated bacteria from the marine sponges Agelas sventres and Xestospongia muta collected from different depths
+Study title: "Cultivation and antimicrobial screening of sponge-associated bacteria from the marine sponges Agelas sventres and Xestospongia muta collected from different depths"
 Authors: Anak Agung Gede Indraningrat, Sebastian Micheller, Mandy Runderkamp, Ina Sauerland1, Leontine. E. Becking, Hauke Smidt and Detmer Sipkema 
 
 In this repository are all the files and codes used for reproducible data analysis 
