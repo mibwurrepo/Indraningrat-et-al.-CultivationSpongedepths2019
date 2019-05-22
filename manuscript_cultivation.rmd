@@ -263,14 +263,14 @@ psMediaXmuta_only.hel <- transform(psMediaXmuta_only, "hellinger")
 otu_table_psMediaXmuta_only  <- as.data.frame(psMediaXmuta_only@otu_table)
 ordu.bray.MediaXmuta.hel = ordinate(psMediaXmuta_only, "PCoA", "bray", weighted=F)
 bray.MediaXmuta.hel <- plot_ordination(psMediaXmuta_only.hel, ordu.bray.MediaXmuta.hel,color="Depth",shape="MediaType")
-bray_MediaXmuta.hel <- bray.MediaXmuta.hel + scale_colour_manual(values = c("royalblue4", "royalblue1","steelblue1")) + geom_point(size = 2) + theme_bw()
+bray_MediaXmuta.hel <- bray.MediaXmuta.hel + scale_colour_manual(values = c("darkblue", "darkgreen","red")) + geom_point(size = 5) + theme_bw()
 print(bray_MediaXmuta.hel)
 ###PCOA A. sventres only
 psMediaAsventres_only.hel <- transform(psMediaAsventres_only, "hellinger")
 otu_table_psMediaAsventres_only  <- as.data.frame(psMediaAsventres_only@otu_table)
 ordu.bray.MediaAsventres.hel = ordinate(psMediaAsventres_only, "PCoA", "bray", weighted=F)
 bray.MediaAsventres.hel <- plot_ordination(psMediaAsventres_only.hel, ordu.bray.MediaAsventres.hel,color="Depth",shape="MediaType")
-bray_MediaAsventres.hel <- bray.MediaAsventres.hel + scale_colour_manual(values = c("red4", "orangered")) + geom_point(size = 2) + theme_bw()
+bray_MediaAsventres.hel <- bray.MediaAsventres.hel + scale_colour_manual(values = c("red4", "orangered")) + geom_point(size = 5) + theme_bw()
 print(bray_MediaAsventres.hel)
 
 ############################################Barplot composition based on Phylum level#################################
